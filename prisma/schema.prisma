@@ -1,0 +1,237 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite has no native enum support in Prisma, so enum-like fields below
+// are plain strings whose allowed values are enforced in src/lib/constants.js.
+// Role: USER | PARTNER | ADMIN
+// MaterialType: PLASTIC | PAPER | GLASS | ALUMINUM | ORGANIC | ELECTRONIC
+// EventStatus: PENDING | VERIFIED | REJECTED
+// TxDirection: CREDIT | DEBIT
+// TxReason: RECYCLING_REWARD | REWARD_REDEMPTION | CHALLENGE_REWARD | ADMIN_ADJUSTMENT
+// RedemptionStatus: ACTIVE | USED | EXPIRED
+// ChallengePeriod: DAILY | WEEKLY | MONTHLY | COMMUNITY
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  name           String
+  district       String?
+  city           String    @default("Tashkent")
+  avatarUrl      String?
+  role           String    @default("USER")
+  language       String    @default("uz")
+  theme          String    @default("light")
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  recyclingEvents   RecyclingEvent[]
+  transactions      TokenTransaction[]
+  redemptions       Redemption[]
+  challengeEntries  ChallengeParticipant[]
+  achievements      UserAchievement[]
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  partnerProfile    PartnerProfile?
+  notifications     Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Station {
+  id               String   @id @default(cuid())
+  name             String
+  address          String
+  district         String
+  lat              Float
+  lng              Float
+  acceptedMaterials String  // JSON-encoded array of MaterialType strings
+  openingHours     String
+  capacityPercent  Int      @default(0)
+  isActive         Boolean  @default(true)
+  isDemoLocation   Boolean  @default(true)
+  qrCode           String   @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  recyclingEvents RecyclingEvent[]
+}
+
+model RecyclingEvent {
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stationId     String
+  station       Station      @relation(fields: [stationId], references: [id])
+  material      String
+  estimatedKg   Float
+  aiConfidence  Float?
+  aiMode        String       @default("demo") // "demo" | "model"
+  status        String       @default("VERIFIED")
+  tokensAwarded Int          @default(0)
+  co2SavedKg    Float        @default(0)
+  verificationCode String    @unique
+  createdAt     DateTime     @default(now())
+
+  transaction   TokenTransaction?
+}
+
+model TokenTransaction {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  direction   String
+  reason      String
+  amount      Int
+  balanceAfter Int
+  description String
+  recyclingEventId String? @unique
+  recyclingEvent    RecyclingEvent? @relation(fields: [recyclingEventId], references: [id])
+  redemptionId String?    @unique
+  redemption   Redemption? @relation(fields: [redemptionId], references: [id])
+  prevHash    String?
+  integrityHash String
+  createdAt   DateTime    @default(now())
+}
+
+model RewardRule {
+  id          String       @id @default(cuid())
+  material    String       @unique
+  tokensPerKg Int
+  co2PerKg    Float
+  updatedAt   DateTime     @updatedAt
+}
+
+model Reward {
+  id              String   @id @default(cuid())
+  partnerId       String?
+  partner         PartnerProfile? @relation(fields: [partnerId], references: [id])
+  category        String
+  partnerName     String
+  title           String
+  description     String
+  imageUrl        String
+  tokenCost       Int
+  stockQuantity   Int?
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+  conditions      String?
+  isDemo          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId     String
+  reward       Reward            @relation(fields: [rewardId], references: [id])
+  couponCode   String            @unique
+  status       String            @default("ACTIVE")
+  tokensSpent  Int
+  createdAt    DateTime          @default(now())
+
+  transaction  TokenTransaction?
+}
+
+model Challenge {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  period      String
+  goalType    String // "weight_kg" | "events_count" | "stations_visited" | "streak_days"
+  goalValue   Float
+  rewardTokens Int
+  startDate   DateTime
+  endDate     DateTime
+  isCommunity Boolean         @default(false)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+
+  participants ChallengeParticipant[]
+}
+
+model ChallengeParticipant {
+  id          String    @id @default(cuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  progress    Float     @default(0)
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  rewardedAt  DateTime?
+
+  @@unique([challengeId, userId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String
+  icon        String
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model PartnerProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String
+  isApproved    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  rewards Reward[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  metadata   String?
+  createdAt  DateTime @default(now())
+}

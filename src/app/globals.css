@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --eco-50: #f0fdf4;
+  --eco-100: #dcfce7;
+  --eco-200: #bbf0d2;
+  --eco-500: #22c55e;
+  --eco-600: #16a34a;
+  --eco-700: #15803d;
+  --eco-800: #166534;
+  --eco-900: #14532d;
+  --eco-950: #0f291e;
+  --lime-400: #accf35;
+  --lime-500: #84cc16;
+  --lime-600: #65a30d;
+
+  --bg: #f8fafc;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-solid: #ffffff;
+  --border-c: rgba(226, 232, 240, 0.8);
+  --text: #1e293b;
+  --text-muted: #64748b;
+}
+
+.dark {
+  --bg: #0b1410;
+  --surface: rgba(20, 30, 26, 0.85);
+  --surface-solid: #10201a;
+  --border-c: rgba(255, 255, 255, 0.08);
+  --text: #e7f3ec;
+  --text-muted: #94a3a0;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-eco-50: var(--eco-50);
+  --color-eco-100: var(--eco-100);
+  --color-eco-200: var(--eco-200);
+  --color-eco-500: var(--eco-500);
+  --color-eco-600: var(--eco-600);
+  --color-eco-700: var(--eco-700);
+  --color-eco-800: var(--eco-800);
+  --color-eco-900: var(--eco-900);
+  --color-eco-950: var(--eco-950);
+  --color-lime-400: var(--lime-400);
+  --color-lime-500: var(--lime-500);
+  --color-lime-600: var(--lime-600);
+  --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+}
+
+.glass-card {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-c);
+}
+
+.surface {
+  background: var(--surface-solid);
+  border: 1px solid var(--border-c);
+}
+
+.scanner-laser {
+  background: linear-gradient(
+    to bottom,
+    rgba(34, 197, 94, 0),
+    rgba(34, 197, 94, 0.8) 50%,
+    rgba(34, 197, 94, 0)
+  );
+  height: 4px;
+  width: 100%;
+  position: absolute;
+  animation: scan 2s infinite ease-in-out;
+}
+
+@keyframes scan {
+  0% {
+    top: 0%;
+  }
+  50% {
+    top: 95%;
+  }
+  100% {
+    top: 0%;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+  z-index: 0;
 }
