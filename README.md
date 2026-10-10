@@ -38,7 +38,8 @@ Being upfront about this matters more than it looks impressive in a screenshot.
 - Prisma ORM + **SQLite** for local dev (zero external services to stand up for a
   hackathon). The schema has no SQLite-specific types — switching `datasource.provider`
   to `postgresql` and pointing `DATABASE_URL` at a Postgres instance is the only change
-  needed to run this in production.
+  needed to run this in production. The build generates Prisma Client first so its query
+  engine matches the deployment platform.
 - Custom session-cookie auth (bcrypt + httpOnly cookie + `Session` table) — no
   third-party auth dependency.
 
