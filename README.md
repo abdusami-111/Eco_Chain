@@ -35,20 +35,18 @@ Being upfront about this matters more than it looks impressive in a screenshot.
   page around `<Suspense>` for no benefit here.
 - Tailwind CSS v4, `lucide-react` icons, Recharts, Leaflet/OpenStreetMap via
   `react-leaflet`, TanStack React Query.
-- Prisma ORM + **SQLite** for local dev (zero external services to stand up for a
-  hackathon). The schema has no SQLite-specific types — switching `datasource.provider`
-  to `postgresql` and pointing `DATABASE_URL` at a Postgres instance is the only change
-  needed to run this in production. The build generates Prisma Client first so its query
-  engine matches the deployment platform.
+- Prisma ORM + PostgreSQL. The checked-in migrations create and update the database
+  schema; `npm run build` applies pending migrations before building the app. Set
+  `DATABASE_URL` to the PostgreSQL database used by the deployment.
 - Custom session-cookie auth (bcrypt + httpOnly cookie + `Session` table) — no
   third-party auth dependency.
 
 ## Getting started
 
 ```bash
-cp .env.example .env     # defaults work out of the box for local dev
+cp .env.example .env     # set DATABASE_URL to your PostgreSQL database
 npm install
-npm run db:migrate       # create the SQLite schema
+npm run db:migrate       # apply database migrations
 npm run db:seed          # demo users, stations, rewards, challenges, sample ledger history
 npm run dev
 ```
