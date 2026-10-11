@@ -1,15 +1,16 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "windows"]
+  binaryTargets = ["native", "windows", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// SQLite has no native enum support in Prisma, so enum-like fields below
-// are plain strings whose allowed values are enforced in src/lib/constants.js.
+// Enum-like fields below are kept as plain strings (not native Postgres enums)
+// so values are enforced in src/lib/constants.js instead of the DB schema.
 // Role: USER | PARTNER | ADMIN
 // MaterialType: PLASTIC | PAPER | GLASS | ALUMINUM | ORGANIC | ELECTRONIC
 // EventStatus: PENDING | VERIFIED | REJECTED
